@@ -1,76 +1,57 @@
-function toggleObjecao(el) {
-  el.classList.toggle('open');
-}
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-// Animação de digitação no logo
-function typeWriter(element, text, speed = 100) {
-  let i = 0;
-  element.textContent = '';
-  
-  function type() {
-    if (i < text.length) {
-      element.textContent += text.charAt(i);
-      i++;
-      setTimeout(type, speed);
-    }
-  }
-  
-  type();
-}
-
-// Iniciar animação quando a página carregar
-document.addEventListener('DOMContentLoaded', () => {
-  const typingElement = document.querySelector('.typing-text');
-  if (typingElement) {
-    setTimeout(() => {
-      typeWriter(typingElement, 'singular.', 80);
-    }, 500);
-  }
-
-  const heroTypingElement = document.querySelector('.hero-typing-text');
-  if (heroTypingElement) {
-    setTimeout(() => {
-      const heroText = 'Cada dia sem<br>cliente é <span class="accent">dinheiro</span><br><span class="outline">indo embora.</span>';
-      typeWriterHTML(heroTypingElement, heroText, 50);
-    }, 1200);
-  }
-});
-
-// Função para digitar texto com HTML
-function typeWriterHTML(element, html, speed = 100) {
-  let i = 0;
-  element.innerHTML = '';
-  
-  function type() {
-    if (i < html.length) {
-      // Verifica se estamos no meio de uma tag HTML
-      if (html.charAt(i) === '<') {
-        const tagEnd = html.indexOf('>', i);
-        if (tagEnd !== -1) {
-          element.innerHTML += html.substring(i, tagEnd + 1);
-          i = tagEnd + 1;
-          setTimeout(type, speed);
-          return;
+    // Animação de contagem para os números
+function animateCount(element, target, suffix = '', prefix = '', duration = 2000) {
+    let start = 0;
+    const increment = target / (duration / 8);
+    const timer = setInterval(() => {
+        start += increment;
+        if (start >= target) {
+            element.textContent = prefix + target + suffix;
+            clearInterval(timer);
+        } else {
+            element.textContent = prefix + Math.floor(start) + suffix;
         }
-      }
-      element.innerHTML += html.charAt(i);
-      i++;
-      setTimeout(type, speed);
-    } else {
-      // Remove o cursor após a digitação terminar
-      const cursor = document.querySelector('.hero-cursor');
-      if (cursor) {
-        setTimeout(() => {
-          cursor.style.display = 'none';
-        }, 2000);
-      }
-    }
-  }
-  
-  type();
+    }, 16);
 }
+
+// Função para extrair o número do texto
+function extractNumber(text) {
+    const match = text.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+}
+
+// Função para obter prefixo e sufixo
+function getPrefixSuffix(text) {
+    const match = text.match(/([^\d]*)(\d+)([^\d]*)/);
+    if (match) {
+        return { prefix: match[1], suffix: match[3] };
+    }
+    return { prefix: '', suffix: '' };
+}
+
+// Inicializar animações quando a seção estiver visível
+function initCountAnimation() {
+    const cards = document.querySelectorAll('.card h2.gradient-text');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const element = entry.target;
+                const originalText = element.textContent;
+                const { prefix, suffix } = getPrefixSuffix(originalText);
+                const target = extractNumber(originalText);
+                
+                animateCount(element, target, suffix, prefix);
+                observer.unobserve(element);
+            }
+        });
+    }, {
+        threshold: 0.5
+    });
+
+    cards.forEach(card => {
+        observer.observe(card);
+    });
+}
+
+// Inicializar quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', initCountAnimation);
